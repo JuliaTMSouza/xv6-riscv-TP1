@@ -503,3 +503,16 @@ sys_pipe(void)
   }
   return 0;
 }
+
+uint64
+settickets(int n)
+{ 
+  if (n < 0) {
+    return -1;
+  } 
+
+  struct proc *p = myproc();
+  p->tickets = n;
+  return 0;
+
+}
