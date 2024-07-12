@@ -126,6 +126,7 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
+  p->tickets = 1;
 
   // Allocate a trapframe page.
   if ((p->trapframe = (struct trapframe *)kalloc()) == 0)
@@ -173,6 +174,7 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+  p->tickets = 0;
 }
 
 // Create a user page table for a given process, with no user memory,
@@ -322,6 +324,8 @@ int fork(void)
 
   pid = np->pid;
 
+  np->tickets = p->tickets;
+
   release(&np->lock);
 
   acquire(&wait_lock);
@@ -371,6 +375,8 @@ void exit(int status)
       p->ofile[fd] = 0;
     }
   }
+
+  p->tickets = 0;
 
   begin_op();
   iput(p->cwd);
@@ -464,7 +470,6 @@ void scheduler(void)
   struct cpu *c = mycpu();
   int totaltickets = 0;
   int counter = 0;
-  int winner = getrandom(0, totaltickets);
 
   c->proc = 0;
   for (;;)
@@ -472,16 +477,19 @@ void scheduler(void)
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
 
-    // while(true)
+    totaltickets = countticket();
+
+    int winner = getrandom(0, totaltickets);
 
     for (p = proc; p < &proc[NPROC]; p++)
     {
       acquire(&p->lock);
-      if (p->state == RUNNABLE)
+      if (p->state == RUNNABLE && (winner >= counter && winner < (counter + p->tickets)))
       {
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
         // before jumping back to us.
+
         p->state = RUNNING;
         c->proc = p;
         swtch(&c->context, &p->context);
@@ -490,6 +498,7 @@ void scheduler(void)
         // It should have changed its p->state before coming back.
         c->proc = 0;
       }
+      counter += p->tickets;
       release(&p->lock);
     }
   }
@@ -706,4 +715,19 @@ void procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+int countticket(void)
+{
+  int total = 0;
+  struct proc *p;
+
+  for (p = proc; p < &proc[NPROC]; p++)
+  {
+    if (p->state != SLEEPING){
+      total += p->tickets;
+    }
+  }
+
+  return total;
 }
