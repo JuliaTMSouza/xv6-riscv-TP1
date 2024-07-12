@@ -306,6 +306,9 @@ int fork(void)
   // copy saved user registers.
   *(np->trapframe) = *(p->trapframe);
 
+  //copy parents ticket number
+  np->tickets = p->tickets;
+
   // Cause fork to return 0 in the child.
   np->trapframe->a0 = 0;
 
@@ -469,7 +472,7 @@ void scheduler(void)
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
 
-    while(true)
+    // while(true)
 
     for (p = proc; p < &proc[NPROC]; p++)
     {

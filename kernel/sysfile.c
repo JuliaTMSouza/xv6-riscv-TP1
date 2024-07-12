@@ -507,7 +507,7 @@ sys_pipe(void)
 uint64
 settickets(int n)
 { 
-  if (n < 0) {
+  if (n < 1) {
     return -1;
   } 
 
