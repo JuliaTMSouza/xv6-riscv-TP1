@@ -175,7 +175,6 @@ freeproc(struct proc *p)
   p->xstate = 0;
   p->state = UNUSED;
   p->tickets = 0;
-  p->totaltickets = 0;
 }
 
 // Create a user page table for a given process, with no user memory,
@@ -487,7 +486,6 @@ void scheduler(void)
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
         // before jumping back to us.
-        p->totaltickets = totaltickets;
 
         p->state = RUNNING;
         c->proc = p;
