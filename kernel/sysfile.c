@@ -588,22 +588,21 @@ sys_settickets(void)
 }
 
 uint64
-sys_getpinfo(void)
+sys_getpinfo(struct pstat *p)
 {
   printf("hello\n");
-  struct pstat p;
 
   extern struct proc proc[NPROC];
 
   for (int i = 0; i < NPROC; i++) {
     if (proc[i].state == UNUSED) {
-      p.inuse[i] = 0;
+      p->inuse[i] = 0;
     } else {
-      p.inuse[i] = 1;
+      p->inuse[i] = 1;
     }
-    p.tickets[i] = proc[i].tickets;
-    p.pid[i] = proc[i].pid;
-    p.ticks[i] = proc[i].ticks;
+    p->tickets[i] = proc[i].tickets;
+    p->pid[i] = proc[i].pid;
+    p->ticks[i] = proc[i].ticks;
   }
   printf("hello2\n");
 

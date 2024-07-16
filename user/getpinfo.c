@@ -12,7 +12,7 @@ int main(int argc, struct pstat *argv[])
         exit(1);
     }
 
-    struct pstat *p = malloc(sizeof(p));
+    struct pstat *p = malloc(sizeof(struct pstat));
 
     int response = getpinfo(p);
     printf("logo dps de entrar\n");

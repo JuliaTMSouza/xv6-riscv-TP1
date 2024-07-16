@@ -529,6 +529,7 @@ void scheduler(void)
         // before jumping back to us.
 
         p->state = RUNNING;
+        p->ticks = ticks;
         c->proc = p;
         swtch(&c->context, &p->context);
 
