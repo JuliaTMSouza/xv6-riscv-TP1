@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "pstat.h"
 
 struct cpu cpus[NCPU];
 
@@ -308,7 +309,7 @@ int fork(void)
   // copy saved user registers.
   *(np->trapframe) = *(p->trapframe);
 
-  //copy parents ticket number
+  // copy parents ticket number
   np->tickets = p->tickets;
 
   // Cause fork to return 0 in the child.
@@ -323,8 +324,6 @@ int fork(void)
   safestrcpy(np->name, p->name, sizeof(p->name));
 
   pid = np->pid;
-
-  np->tickets = p->tickets;
 
   release(&np->lock);
 
@@ -376,6 +375,7 @@ void exit(int status)
     }
   }
 
+  // recovering tickets
   p->tickets = 0;
 
   begin_op();
@@ -457,6 +457,43 @@ int wait(uint64 addr)
   }
 }
 
+int countticket(void)
+{
+  int total = 0;
+  struct proc *p = myproc();
+
+  for (p = proc; p < &proc[NPROC]; p++)
+  {
+    if (p->tickets == 0) {
+      p->tickets = 1;
+    }
+    if (p->state != SLEEPING)
+    {
+      total += p->tickets;
+    }
+  }
+
+  return total;
+}
+
+int get_random_number(int max)
+{
+  if (max == 0)
+  {
+    return 0;
+  }
+  // Parâmetros do LCG
+  unsigned int a = 1664525;                  // Multiplicador
+  unsigned int c = 1013904223;               // Incremento
+  unsigned int m = (unsigned int)4294967296; // Módulo (2^32)
+
+  unsigned int seed = ticks;
+
+  unsigned int number = (a * seed + c) % m; // Calcula o próximo número aleatório
+  // Retorna o número no intervalo de 0 a max
+  return (number % max);
+}
+
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:
@@ -469,22 +506,23 @@ void scheduler(void)
   struct proc *p;
   struct cpu *c = mycpu();
   int totaltickets = 0;
-  int counter = 0;
 
   c->proc = 0;
   for (;;)
   {
+    int counter = 0;
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
 
     totaltickets = countticket();
 
-    int winner = getrandom(0, totaltickets);
-
+    int winner = get_random_number(totaltickets);
     for (p = proc; p < &proc[NPROC]; p++)
     {
       acquire(&p->lock);
-      if (p->state == RUNNABLE && (winner >= counter && winner < (counter + p->tickets)))
+      int procMax = counter + p->tickets;
+      // printf("processo: %d, tickets: %d, winner: %d\n", p->pid, p->tickets, winner);
+      if (p->state == RUNNABLE && (winner >= counter && winner < procMax))
       {
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
@@ -715,19 +753,4 @@ void procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
-}
-
-int countticket(void)
-{
-  int total = 0;
-  struct proc *p;
-
-  for (p = proc; p < &proc[NPROC]; p++)
-  {
-    if (p->state != SLEEPING){
-      total += p->tickets;
-    }
-  }
-
-  return total;
 }

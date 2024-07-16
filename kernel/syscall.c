@@ -104,6 +104,7 @@ extern uint64 sys_mkdir(void);
 extern uint64 sys_close(void);
 extern uint64 sys_getcnt(void);
 extern uint64 sys_settickets(void);
+extern uint64 sys_getpinfo(void);
 
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
@@ -131,9 +132,10 @@ static uint64 (*syscalls[])(void) = {
 [SYS_close]   sys_close,
 [SYS_getcnt]  sys_getcnt,
 [SYS_settickets]  sys_settickets,
+[SYS_getpinfo]  sys_getpinfo,
 };
 
-atomic_int syscallCounter[23] = {0};
+atomic_int syscallCounter[24] = {0};
 
 uint64 
 sys_getcnt(void)
@@ -162,7 +164,6 @@ syscall(void)
 
   num = p->trapframe->a7;
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
-    atomic_fetch_add_explicit(&syscallCounter[num-1], 1, memory_order_relaxed);
     // Use num to lookup the system call function for num, call it,
     // and store its return value in p->trapframe->a0
     p->trapframe->a0 = syscalls[num]();
