@@ -108,5 +108,3 @@ struct proc {
   int tickets;
   int ticks;
 };
-
-extern struct proc proc[NPROC];
