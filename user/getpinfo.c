@@ -6,15 +6,16 @@
 int main(int argc, struct pstat *argv[])
 {
 
-    if (argc != 2)
+    if (argc != 1)
     {
-        fprintf(2, "usage: getpinfo struct pstat * ...\n");
+        fprintf(2, "usage: getpinfo...\n");
         exit(1);
     }
 
     struct pstat *p = malloc(sizeof(p));
 
     int response = getpinfo(p);
+    printf("logo dps de entrar\n");
 
     if (response == 0)
     {
@@ -25,12 +26,11 @@ int main(int argc, struct pstat *argv[])
                 printf("PID: %d, Tickets: %d, Ticks: %d\n", p->pid[i], p->tickets[i], p->ticks[i]);
             }
         }
-        argv[1] = p;
     }
     else
     {
         printf("Não foi possível obter as informações\n");
     }
-
+    free(p);
     exit(0);
 }
