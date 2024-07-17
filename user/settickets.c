@@ -14,10 +14,9 @@ int main(int argc, char *argv[])
     int ticketNumber = atoi(argv[1]);
     int success = settickets(ticketNumber);
 
-    if (success == 0) {
-        printf("Tickets alocados com sucesso\n");
-    } else {
+    if (success != 0) {
         printf("Não foi possível alocar este número de tickets\n");
+        exit(1);
     }
 
     exit(0);

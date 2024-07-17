@@ -15,22 +15,19 @@ int main(int argc, struct pstat *argv[])
     struct pstat *p = malloc(sizeof(struct pstat));
 
     int response = getpinfo(p);
-    printf("logo dps de entrar\n");
 
-    if (response == 0)
-    {
-        for (int i = 0; i < NPROC; i++)
-        {
-            if (p->inuse[i])
-            {
-                printf("PID: %d, Tickets: %d, Ticks: %d\n", p->pid[i], p->tickets[i], p->ticks[i]);
-            }
-        }
-    }
-    else
+    if (response != 0)
     {
         printf("Não foi possível obter as informações\n");
+        exit(1);
     }
-    free(p);
+
+    for (int i = 0; i < NPROC; i++)
+    {
+        if (p->inuse[i] == 1)
+        {
+            printf("PID: %d, Tickets: %d, Ticks: %d\n", p->pid[i], p->tickets[i], p->ticks[i]);
+        }
+    }
     exit(0);
 }

@@ -464,7 +464,8 @@ int countticket(void)
 
   for (p = proc; p < &proc[NPROC]; p++)
   {
-    if (p->tickets == 0) {
+    if (p->tickets == 0)
+    {
       p->tickets = 1;
     }
     if (p->state != SLEEPING)
@@ -754,4 +755,24 @@ void procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+uint64
+sys_getpinfo(struct pstat *ps)
+{
+  
+  struct proc *p;
+  int i = 0;
+
+  for (p = proc; p < &proc[NPROC]; p++)
+  {
+    if (p->state == UNUSED)
+      continue;
+    ps->inuse[i] = 1;
+    ps->tickets[i] = p->tickets;
+    ps->pid[i] = p->pid;
+    ps->ticks[i] = p->ticks;
+    i++;
+  }
+  return 0;
 }
